@@ -11,8 +11,8 @@ def ret_free_tracking(A, W, step_size, X_0, x_opt, max_iter=10000, lin_term=None
     n = X_0.shape[1]
     r = X_0.shape[2]
     
-    lambd = 0.2
-    beta = 0.1
+    lambd = 0.1
+    beta = 1
     x = np.copy(X_0)
     y = np.zeros_like(X_0)
     grad = np.zeros_like(X_0)
@@ -32,11 +32,12 @@ def ret_free_tracking(A, W, step_size, X_0, x_opt, max_iter=10000, lin_term=None
             diff[i] += lin_term[i]
         grad[i] = proj_tangent(x[i], diff[i])
         penalty[i] = lambd * x[i] @ (x[i].T@x[i] - np.eye(r))
-        y[i] = proj_tangent(x[i], A[i]@A[i].T@x[i])
-    
+        # y[i] = proj_tangent(x[i], diff[i])
+        y[i] = step_size * grad[i] - penalty[i]
+
     # y = np.copy(grad)
-    y = np.copy(diff)
-    
+    # y = np.copy(diff)
+    # y = step_size * grad - penalty
     # manual first round
     # for i in range(N):
     #     x[i] = x[i] + proj_tangent(x[i], grad[i]) - penalty[i]
@@ -47,7 +48,7 @@ def ret_free_tracking(A, W, step_size, X_0, x_opt, max_iter=10000, lin_term=None
         old_diff = copy.deepcopy(diff)
         old_x = copy.deepcopy(x)
         old_y = copy.deepcopy(y)
-        # old_penalty = penalty
+        old_penalty = copy.deepcopy(penalty)
                 
         Wx = np.zeros_like(x)
         for i in range(N):
@@ -57,9 +58,9 @@ def ret_free_tracking(A, W, step_size, X_0, x_opt, max_iter=10000, lin_term=None
                 
         for i in range(N):
             # x[i] = x[i] + proj_tangent(x[i], beta*Wx[i] + step_size*y[i]) - penalty[i]
-            x[i] = x[i] +  beta*Wx[i] + proj_tangent(x[i], step_size*y[i]) - penalty[i]
+            # x[i] = x[i] +  beta*Wx[i] + proj_tangent(x[i], step_size*y[i]) - penalty[i]
             # x[i] = x[i] + proj_tangent(x[i], beta*Wx[i] + step_size*grad[i]) - penalty[i]
-            
+            x[i] = x[i] +  beta*Wx[i] + y[i]
             
         grad = np.zeros_like(X_0)
         diff = np.zeros_like(X_0)
@@ -72,10 +73,14 @@ def ret_free_tracking(A, W, step_size, X_0, x_opt, max_iter=10000, lin_term=None
             # print(np.linalg.norm(x[i].T@x[i] - np.eye(r)))
         y = np.zeros_like(old_y)
         for i in range(N):
+            y[i] = old_y[i]
             for j in range(N):
-                y[i] += W[i,j] * old_y[j] 
-            y[i] += diff[i] - old_diff[i]
+                y[i] += beta*W[i,j] * (old_y[j] - old_y[i])
+            u = step_size * grad[i] - penalty[i]
+            old_u = step_size * old_grad[i] - old_penalty[i]
+            # y[i] += diff[i] - old_diff[i]
             # y[i] += grad[i] - old_grad[i]
+            y[i] += (u - old_u)
         # dist = 0
         # for i in range(N):
         #     dist += np.linalg.norm(x_opt-x[i])
