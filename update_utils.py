@@ -4,10 +4,10 @@ import numpy as np
 def proj_tangent(x, differential):
     d = differential.shape[1]
     r = differential.shape[0]
-    W_hat = (np.eye(r) - 0.5*x@x.T)@differential@x.T
+    # W_hat = (np.eye(r) - 0.5*x@x.T)@differential@x.T
     
-    gradf = (W_hat - W_hat.T)@x
-    return gradf
+    # gradf = (W_hat - W_hat.T)@x
+    # return gradf
     
     
     xd = x.T@differential
