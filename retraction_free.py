@@ -13,7 +13,7 @@ def ret_free_tracking(A, W, step_size, X_0, x_opt, max_iter=10000, lin_term=None
     n = X_0.shape[1]
     r = X_0.shape[2]
     
-    lambd = 0.2
+    lambd = 0.1
     beta = 1
     x = np.copy(X_0)
     y = np.zeros_like(X_0)
